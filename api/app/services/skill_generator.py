@@ -75,7 +75,7 @@ YAML frontmatter 없이 마크다운 본문만 작성하세요.
                 "contents": [{"role": "user", "parts": [{"text": prompt}]}],
                 "generationConfig": {"temperature": 0.3, "maxOutputTokens": 2048},
             },
-            timeout=30.0,
+            timeout=120.0,
         )
         if resp.status_code == 429:
             return {"error": "rate_limited", "message": "Gemini API quota exceeded"}

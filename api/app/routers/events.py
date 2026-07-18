@@ -38,6 +38,17 @@ class TelemetryResponse(BaseModel):
 
 @router.post("/events", status_code=201)
 async def ingest_event(body: TelemetryPayload, request: Request):
+    if body.payload:
+        from api.app.safety.redact import redact_text
+        def redact_data(data):
+            if isinstance(data, dict):
+                return {k: redact_data(v) for k, v in data.items()}
+            elif isinstance(data, list):
+                return [redact_data(v) for v in data]
+            elif isinstance(data, str):
+                return redact_text(data)
+            return data
+        body.payload = redact_data(body.payload)
     if body.event_type not in VALID_EVENT_TYPES:
         raise HTTPException(status_code=400, detail=f"Unknown event_type: {body.event_type}")
 

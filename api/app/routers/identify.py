@@ -204,6 +204,8 @@ def _match_devices_table(analysis_text: str) -> tuple:
 
 @router.post("/identify", response_model=IdentifyResponse)
 async def identify_device(body: IdentifyRequest):
+    from api.app.safety.redact import redact_image
+    body.image = redact_image(body.image)
     if not GEMINI_API_KEY:
         raise HTTPException(status_code=503, detail="GEMINI_API_KEY not configured on server")
 

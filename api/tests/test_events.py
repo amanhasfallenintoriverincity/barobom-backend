@@ -78,3 +78,29 @@ def test_event_with_payload():
     }
     response = client.post("/v1/events", json=payload)
     assert response.status_code == 201
+
+
+def test_event_payload_redacts_pii():
+    payload = {
+        "anonymous_id": "a" * 20,
+        "event_type": "step_shown",
+        "payload": {
+            "step": 1,
+            "goal": "주문하기",
+            "user_input": "내 전화번호는 010-9876-5432 야"
+        },
+    }
+    response = client.post("/v1/events", json=payload)
+    assert response.status_code == 201
+    
+    # Check that in DB it got redacted
+    from api.app.db import SessionLocal
+    from api.app.models.event import UserEvent
+    db = SessionLocal()
+    try:
+        event = db.query(UserEvent).filter(UserEvent.anonymous_id == "a" * 20).order_by(UserEvent.id.desc()).first()
+        assert event is not None
+        assert "010-****-5432" in event.payload
+        assert "9876" not in event.payload
+    finally:
+        db.close()
